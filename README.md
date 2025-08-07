@@ -105,7 +105,7 @@ Transform your business documents into intelligent, conversational interfaces. D
 ```bash
 # 1. Clone the repository
 git clone https://github.com/Kyle6012/smartdocs-AI
-cd wa-agent
+cd smartdocs-AI
 
 # 2. Install dependencies
 npm install
