@@ -1,7 +1,5 @@
 # 📚 Documentation Index
 
-Complete documentation for your **AI WhatsApp Bot** with PDF/DOCX processing, vector database, and multi-platform support.
-
 ## 🚀 **Getting Started**
 
 ### **Quick Setup (5 minutes)**
@@ -201,6 +199,6 @@ Complete documentation for your **AI WhatsApp Bot** with PDF/DOCX processing, ve
 
 ---
 
-**🎉 Welcome to your AI WhatsApp Bot!** This comprehensive documentation will help you build, deploy, and manage an intelligent assistant that knows everything about your business. Start with the [Quick Start Guide](../QUICK_START.md) and explore from there! 🤖✨
+**🎉 Welcome to smartdocs-AI!** This comprehensive documentation will help you build, deploy, and manage an intelligent assistant that knows everything about your business. Start with the [Quick Start Guide](../QUICK_START.md) and explore from there! 🤖✨
 
 **Need specific help?** Use the navigation above or check our [Troubleshooting Guide](../TROUBLESHOOTING.md) for common issues. 
