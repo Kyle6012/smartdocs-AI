@@ -231,10 +231,6 @@ Production deployments across various industry verticals:
 - **🎓 Educational Technology Solutions**: Scalable knowledge management systems for institutional learning and student support
 - **💼 Corporate Knowledge Management**: Enterprise document intelligence for customer service automation and internal knowledge bases
 
-## 🌟 **Star History**
-
-[![Star History Chart](https://api.star-history.com/svg?repos=Kyle6012/WhatsApp-AI-Assistant&type=Date)](https://star-history.com/#Kyle6012/WhatsApp-AI-Assistant&Date)
-
 ## 🤝 **Contributing**
 
 We welcome enterprise-grade contributions from the developer community. This platform serves:
