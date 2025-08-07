@@ -14,7 +14,7 @@ export interface UnifiedMessage {
 export class UnifiedChatHandler {
   static fromWhatsApp(message: WhatsAppMessage): UnifiedMessage {
     return {
-      from: message.from,
+      from: this.formatPhoneNumber(message.from),
       text: message.text,
       timestamp: message.timestamp,
       platform: 'whatsapp'
@@ -23,7 +23,7 @@ export class UnifiedChatHandler {
 
   static fromWhatsAppBusiness(message: WhatsAppBusinessMessage): UnifiedMessage {
     return {
-      from: message.from,
+      from: this.formatPhoneNumber(message.from),
       text: message.text,
       timestamp: message.timestamp,
       platform: 'whatsapp-business',

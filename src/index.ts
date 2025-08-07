@@ -146,6 +146,11 @@ async function handleUnifiedMessage(message: UnifiedMessage): Promise<void> {
     const sanitizedMessage = sanitizeMessage(message.text);
     logger.info(`Processing ${message.platform} message from ${message.from}: ${sanitizedMessage}`);
 
+    if (!sanitizedMessage) {
+      logger.info('Received empty message, skipping processing.');
+      return;
+    }
+
     // Check if it's an admin command (starts with /) from an admin user
     if (adminTrainingService.isAdmin(message.from) && sanitizedMessage.startsWith('/')) {
       const adminResponse = await adminTrainingService.handleAdminMessage(message.from, sanitizedMessage);
@@ -246,7 +251,8 @@ async function initializeServices(): Promise<void> {
 
     // Initialize Together AI service
     const model = process.env.TOGETHER_MODEL || 'meta-llama/Llama-2-70b-chat-hf';
-    togetherService = new TogetherAIService(process.env.TOGETHER_API_KEY, model);
+    const embeddingModel = process.env.TOGETHER_EMBEDDING_MODEL || 'BAAI/bge-base-en-v1.5';
+    togetherService = new TogetherAIService(process.env.TOGETHER_API_KEY, model, embeddingModel);
 
     // Initialize Qdrant service with auto-generated collection name if not provided
     const collectionName = process.env.QDRANT_COLLECTION_NAME || 'knowledge_base';
@@ -285,6 +291,10 @@ async function initializeServices(): Promise<void> {
     await whatsappService.initialize();
 
     logger.success('All services initialized successfully');
+
+    // Temporary test function
+    setTimeout(runTemporaryTests, 5000);
+
   } catch (error) {
     logger.error('Failed to initialize services:', error);
     process.exit(1);
