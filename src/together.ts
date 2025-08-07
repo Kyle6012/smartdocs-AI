@@ -15,12 +15,14 @@ export class TogetherAIService {
   private apiKey: string;
   private baseUrl: string;
   private model: string;
+  private embeddingModel: string;
   private systemPrompt: string;
 
-  constructor(apiKey: string, model: string = 'meta-llama/Llama-2-70b-chat-hf') {
+  constructor(apiKey: string, model: string = 'meta-llama/Llama-2-70b-chat-hf', embeddingModel: string = 'BAAI/bge-base-en-v1.5') {
     this.apiKey = apiKey;
     this.baseUrl = 'https://api.together.xyz/v1';
     this.model = model;
+    this.embeddingModel = embeddingModel;
     this.systemPrompt = `You are a helpful AI assistant. Use the provided context to answer questions accurately and helpfully. If the context doesn't contain relevant information, say so and provide a general helpful response.`;
   }
 
@@ -89,34 +91,28 @@ export class TogetherAIService {
 
   async generateEmbedding(text: string): Promise<number[]> {
     try {
-      // Use a simple fallback embedding for now since Together AI embeddings endpoint changed
-      // In production, you'd use a proper embedding service
-      logger.info('Generating fallback embedding (768-dim)');
-      
-      // Create a simple hash-based embedding as fallback
-      const hash = this.simpleHash(text);
-      const embedding = new Array(768).fill(0);
-      
-      // Fill embedding with deterministic values based on text hash
-      for (let i = 0; i < 768; i++) {
-        embedding[i] = Math.sin(hash + i) * 0.1;
-      }
-      
-      return embedding;
-    } catch (error) {
-      logger.error('Failed to generate embedding:', error);
-      return new Array(768).fill(0);
-    }
-  }
+      const response = await axios.post(`${this.baseUrl}/embeddings`, {
+        model: this.embeddingModel,
+        input: text,
+      }, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      });
 
-  private simpleHash(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      if (response.data?.data?.[0]?.embedding) {
+        logger.info(`Embedding generated using ${this.embeddingModel}`);
+        return response.data.data[0].embedding;
+      }
+
+      logger.warn('Unexpected Together AI embedding response format:', response.data);
+      throw new Error('Invalid embedding response format');
+    } catch (error: any) {
+      logger.error('Together AI embedding API error:', error.message);
+      throw error;
     }
-    return Math.abs(hash);
   }
 
   setSystemPrompt(prompt: string): void {
