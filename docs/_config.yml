@@ -1,0 +1,82 @@
+# Site settings
+title: SmartDocs-AI
+description: "Enterprise-grade AI document intelligence platform with embeddable web widgets and WhatsApp integration. Transform business documents into intelligent conversational interfaces."
+baseurl: "/SmartDocs-AI"
+url: "https://kyle6012.github.io"
+
+# Author information
+author:
+  name: Kyle6012
+  email: kyle6012@example.com
+  github: Kyle6012
+
+# SEO settings
+lang: en_US
+twitter:
+  username: Kyle6012
+  card: summary_large_image
+
+# Social media
+social:
+  name: Kyle6012
+  links:
+    - https://github.com/Kyle6012
+
+# GitHub Pages settings
+github: [metadata]
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-feed
+
+# Theme
+theme: minima
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - node_modules/
+  - src/
+  - package.json
+  - package-lock.json
+  - .env*
+  - dist/
+
+# Include files
+include:
+  - _pages
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "default"
+
+# SEO
+seo:
+  type: WebSite
+  name: SmartDocs-AI
+  headline: Enterprise Document Intelligence Platform
+  description: AI-powered document processing with embeddable web widgets and WhatsApp integration
+  url: https://kyle6012.github.io/SmartDocs-AI
+  logo: https://kyle6012.github.io/SmartDocs-AI/assets/logo.png
+  social_image: https://kyle6012.github.io/SmartDocs-AI/assets/og-image.png
+
+# Google Analytics (replace with your tracking ID)
+google_analytics: GA_MEASUREMENT_ID
+
+# GitHub repository
+repository: Kyle6012/SmartDocs-AI 

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G24 Security - Test Website</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            padding: 50px 0;
+        }
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        .services {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 50px 0;
+        }
+        .service-card {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s ease;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+        }
+        .service-card h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+        .cta {
+            text-align: center;
+            padding: 50px 0;
+        }
+        .cta button {
+            background: #ffd700;
+            color: #333;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .cta button:hover {
+            background: #ffed4e;
+            transform: scale(1.05);
+        }
+        .widget-info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            max-width: 300px;
+        }
+        .widget-info h4 {
+            margin: 0 0 10px 0;
+            color: #4ade80;
+        }
+    </style>
+</head>
+<body>
+    <div class="widget-info">
+        <h4>🤖 AI Chat Widget Test</h4>
+        <p><strong>Status:</strong> <span id="widget-status">Loading...</span></p>
+        <p><strong>Backend:</strong> <span id="backend-url">http://localhost:3000</span></p>
+        <p>Look for the chat bubble in bottom-right corner!</p>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ G24 Security</h1>
+            <p>Advanced Cybersecurity Solutions & Penetration Testing</p>
+        </div>
+
+        <div class="services">
+            <div class="service-card">
+                <h3>🔍 Penetration Testing</h3>
+                <p>Comprehensive security assessments to identify vulnerabilities in your systems before attackers do. Our expert team simulates real-world attacks.</p>
+            </div>
+
+            <div class="service-card">
+                <h3>🛡️ Security Audits</h3>
+                <p>Thorough evaluation of your security posture, policies, and procedures. Get detailed reports with actionable recommendations.</p>
+            </div>
+
+            <div class="service-card">
+                <h3>🚨 Incident Response</h3>
+                <p>24/7 emergency response team ready to handle security breaches, malware infections, and cyber attacks. Rapid containment and recovery.</p>
+            </div>
+
+            <div class="service-card">
+                <h3>👁️ Continuous Monitoring</h3>
+                <p>Round-the-clock security monitoring with AI-powered threat detection. Real-time alerts and automated response capabilities.</p>
+            </div>
+
+            <div class="service-card">
+                <h3>🎓 Security Training</h3>
+                <p>Employee cybersecurity awareness training programs. Reduce human error and strengthen your security culture.</p>
+            </div>
+
+            <div class="service-card">
+                <h3>☁️ Cloud Security</h3>
+                <p>Secure your cloud infrastructure with our specialized AWS, Azure, and GCP security services. Configuration reviews and compliance.</p>
+            </div>
+        </div>
+
+        <div class="cta">
+            <button onclick="testChat()">💬 Test Chat Widget</button>
+            <p style="margin-top: 20px; opacity: 0.8;">
+                Try asking: "What penetration testing services do you offer?" or "What are your business hours?"
+            </p>
+        </div>
+    </div>
+
+    <!-- AI CHAT WIDGET - This is what you'd embed on g24sec.space -->
+    <script>
+    (function() {
+        // Check if backend is running
+        fetch('http://localhost:3000/health')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('widget-status').textContent = '✅ Connected';
+                document.getElementById('widget-status').style.color = '#4ade80';
+                
+                // Load the actual widget
+                loadChatWidget();
+            })
+            .catch(error => {
+                document.getElementById('widget-status').textContent = '❌ Backend not running';
+                document.getElementById('widget-status').style.color = '#ef4444';
+                console.log('Backend not running. Start with: npm run dev');
+            });
+
+        function loadChatWidget() {
+            var iframe = document.createElement('iframe');
+            iframe.src = 'http://localhost:3000/widget.html?config=' + encodeURIComponent(JSON.stringify({
+                botName: 'G24 Security Assistant',
+                primaryColor: '#1e40af',
+                accentColor: '#1d4ed8',
+                welcomeMessage: 'Hello! How can G24 Security help you today? Ask about our penetration testing, security audits, or any other services.',
+                position: 'bottom-right',
+                theme: 'light'
+            }));
+            iframe.style.position = 'fixed';
+            iframe.style.bottom = '20px';
+            iframe.style.right = '20px';
+            iframe.style.width = '80px';
+            iframe.style.height = '80px';
+            iframe.style.border = 'none';
+            iframe.style.zIndex = '9999';
+            iframe.style.borderRadius = '50%';
+            iframe.style.overflow = 'hidden';
+            iframe.id = 'g24-chat-widget';
+            
+            document.body.appendChild(iframe);
+
+            // Expand iframe when chat opens
+            window.addEventListener('message', function(event) {
+                if (event.data.type === 'chat-opened') {
+                    iframe.style.width = '350px';
+                    iframe.style.height = '500px';
+                    iframe.style.borderRadius = '12px';
+                } else if (event.data.type === 'chat-closed') {
+                    iframe.style.width = '80px';
+                    iframe.style.height = '80px';
+                    iframe.style.borderRadius = '50%';
+                }
+            });
+        }
+    })();
+
+    function testChat() {
+        alert('Look for the blue chat bubble in the bottom-right corner!\n\nTry asking:\n• "What penetration testing services do you offer?"\n• "What are your business hours?"\n• "How much does a security audit cost?"');
+    }
+    </script>
+</body>
+</html> 

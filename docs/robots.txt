@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /src/
+Disallow: /node_modules/
+Disallow: /.env*
+Disallow: /dist/
+
+# Sitemap location
+Sitemap: https://kyle6012.github.io/SmartDocs-AI/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 1 

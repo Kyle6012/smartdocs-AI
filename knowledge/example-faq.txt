@@ -1,0 +1,14 @@
+Q: What services do you offer?
+A: We offer web development, mobile app development, AI integration, and cloud deployment services. Our team specializes in modern technologies like React, Node.js, Python, and cloud platforms.
+
+Q: How can I get a quote?
+A: You can request a quote by sending us a message with your project requirements. Include details about your timeline, budget range, and specific features you need.
+
+Q: What is your typical project timeline?
+A: Project timelines vary based on complexity. Simple websites take 2-4 weeks, mobile apps take 8-12 weeks, and complex AI integrations take 12-16 weeks. We always provide detailed timelines during our initial consultation.
+
+Q: Do you offer support after project completion?
+A: Yes! We offer 30 days of free support after project delivery, plus ongoing maintenance packages. Our support includes bug fixes, minor updates, and technical assistance.
+
+Q: What technologies do you work with?
+A: We work with React, Vue.js, Node.js, Python, TypeScript, PostgreSQL, MongoDB, AWS, Docker, and various AI APIs. We always choose the best technology stack for your specific needs. 
