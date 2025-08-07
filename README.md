@@ -309,7 +309,7 @@ npm run dev
 
 **Ready to deploy enterprise-grade AI solutions?** Begin with our **[⚡ Enterprise Quick Start Guide](QUICK_START.md)**!
 
-🌐 **[Visit Live Website](https://kyle6012.github.io/SmartDocs-AI/)** | 📚 **[View Documentation](docs/README.md)** | 🚀 **[Deploy Now](#deployment)**
+🌐 **[Visit Live Website](https://kyle6012.github.io/smartdocs-AI/)** | 📚 **[View Documentation](docs/README.md)** | 🚀 **[Deploy Now](#deployment)**
 
 [![Deploy to Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/Kyle6012/SmartDocs-AI)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Kyle6012/SmartDocs-AI)
