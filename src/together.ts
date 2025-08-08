@@ -75,6 +75,8 @@ export class TogetherAIService {
       if (error.response) {
         logger.error('API Response Status:', error.response.status);
         logger.error('API Response Data:', error.response.data);
+      } else {
+        logger.error('Error details:', error);
       }
       
       if (error.response?.status === 401) {
@@ -88,6 +90,10 @@ export class TogetherAIService {
       if (error.response?.status === 400) {
         const errorDetail = error.response.data?.error?.message || 'No additional details provided.';
         return `Invalid request. Please check your model configuration. Details: ${errorDetail}`;
+      }
+
+      if (!error.response) {
+        return 'Could not connect to Together AI API. Please check your network connection and the API endpoint.';
       }
       
       return 'Sorry, I encountered an error while processing your request.';
@@ -119,6 +125,8 @@ export class TogetherAIService {
       if (error.response) {
         logger.error('API Response Status:', error.response.status);
         logger.error('API Response Data:', error.response.data);
+      } else {
+        logger.error('Error details:', error);
       }
       throw error;
     }
