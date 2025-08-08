@@ -268,7 +268,11 @@ async function initializeServices(): Promise<void> {
     // Test connections
     await qdrantService.testConnection();
     await qdrantService.ensureCollection(); // Create collection if it doesn't exist
-    await togetherService.testConnection();
+
+    const togetherConnection = await togetherService.testConnection();
+    if (!togetherConnection.success) {
+      throw new Error(`Together AI connection failed: ${togetherConnection.message}`);
+    }
 
     // Setup knowledge base with default content
     await setupKnowledgeBase(qdrantService, togetherService);
@@ -291,9 +295,6 @@ async function initializeServices(): Promise<void> {
     await whatsappService.initialize();
 
     logger.success('All services initialized successfully');
-
-    // Temporary test function
-    setTimeout(runTemporaryTests, 5000);
 
   } catch (error) {
     logger.error('Failed to initialize services:', error);

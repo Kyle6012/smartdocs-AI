@@ -72,6 +72,10 @@ export class TogetherAIService {
       return 'Sorry, I could not process your request at the moment.';
     } catch (error: any) {
       logger.error('Together AI API error:', error.message);
+      if (error.response) {
+        logger.error('API Response Status:', error.response.status);
+        logger.error('API Response Data:', error.response.data);
+      }
       
       if (error.response?.status === 401) {
         return 'Authentication failed. Please check your Together AI API key.';
@@ -82,7 +86,8 @@ export class TogetherAIService {
       }
       
       if (error.response?.status === 400) {
-        return 'Invalid request. Please try rephrasing your message.';
+        const errorDetail = error.response.data?.error?.message || 'No additional details provided.';
+        return `Invalid request. Please check your model configuration. Details: ${errorDetail}`;
       }
       
       return 'Sorry, I encountered an error while processing your request.';
@@ -111,6 +116,10 @@ export class TogetherAIService {
       throw new Error('Invalid embedding response format');
     } catch (error: any) {
       logger.error('Together AI embedding API error:', error.message);
+      if (error.response) {
+        logger.error('API Response Status:', error.response.status);
+        logger.error('API Response Data:', error.response.data);
+      }
       throw error;
     }
   }
@@ -125,20 +134,21 @@ export class TogetherAIService {
     logger.info(`Model changed to: ${model}`);
   }
 
-  async testConnection(): Promise<boolean> {
+  async testConnection(): Promise<{ success: boolean, message: string }> {
     try {
       const testMessage = 'Hello, this is a test message.';
       const response = await this.chat(testMessage);
       
-      if (response && !response.includes('error') && !response.includes('Authentication failed')) {
+      if (response && !response.includes('error') && !response.includes('Authentication failed') && !response.includes('Invalid request')) {
         logger.success('Together AI connection successful');
-        return true;
+        return { success: true, message: 'Connection successful' };
       }
       
-      return false;
-    } catch (error) {
-      logger.error('Together AI connection test failed:', error);
-      return false;
+      logger.error(`Together AI connection test failed. Response: ${response}`);
+      return { success: false, message: response };
+    } catch (error: any) {
+      logger.error('Together AI connection test failed:', error.message);
+      return { success: false, message: error.message };
     }
   }
 
