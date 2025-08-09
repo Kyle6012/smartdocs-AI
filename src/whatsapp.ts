@@ -3,14 +3,10 @@ import makeWASocket, {
   DisconnectReason,
   useMultiFileAuthState,
   WAMessage,
-  proto,
-  Browsers,
-  downloadMediaMessage
+  proto
 } from '@whiskeysockets/baileys';
-// @ts-ignore
-import makeInMemoryStore from '@whiskeysockets/baileys/lib/Store/make-in-memory-store';
 import { Boom } from '@hapi/boom';
-import { logger, formatPhoneNumber } from './utils';
+import { logger } from './utils';
 
 export interface WhatsAppMessage {
   from: string;
@@ -20,12 +16,8 @@ export interface WhatsAppMessage {
   fileName?: string;
 }
 
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import path from 'path';
-
 export class WhatsAppService {
   private socket: any;
-  private store: any;
   private sessionName: string;
   private onMessageCallback?: (message: WhatsAppMessage) => Promise<void>;
   private connected: boolean = false;
@@ -36,20 +28,6 @@ export class WhatsAppService {
 
   async initialize(): Promise<void> {
     try {
-      const storeLogger = { ...logger, level: 'silent' };
-      this.store = makeInMemoryStore({ logger: storeLogger as any });
-
-      const storeFile = `${this.sessionName}_store.json`;
-      if (existsSync(storeFile)) {
-        this.store.readFromFile(storeFile);
-        logger.info(`Loaded store from file: ${storeFile}`);
-      }
-
-      // Save store to file every 10s
-      setInterval(() => {
-        this.store.writeToFile(storeFile);
-      }, 10_000);
-
       logger.info(`🔄 Initializing WhatsApp with session: ${this.sessionName}`);
       const { state, saveCreds } = await useMultiFileAuthState(this.sessionName);
       
@@ -63,10 +41,6 @@ export class WhatsAppService {
       
       this.socket = makeWASocket({
         auth: state,
-        browser: Browsers.macOS('Desktop'),
-        getMessage: async key => {
-          return (this.store.loadMessage(key.remoteJid!, key.id!) || this.store.loadMessage(key.remoteJid!, key.id!))?.message || undefined
-        },
         logger: {
           level: 'silent',
           trace: () => {},
@@ -86,8 +60,6 @@ export class WhatsAppService {
           })
         } as any
       });
-
-      this.store.bind(this.socket.ev);
 
       this.socket.ev.on('creds.update', saveCreds);
       this.socket.ev.on('connection.update', this.handleConnectionUpdate.bind(this));
@@ -244,7 +216,7 @@ Type */menu* to begin! 🚀`;
         logger.info(`Received document: ${fileName}`);
         
         // Download and process the document
-        const buffer = await this.downloadMediaMessage(message);
+        const buffer = await this.downloadMediaMessage(message, 'document');
         if (buffer) {
           // For PDF and DOCX, keep as buffer; for text files, convert to string
           const fileExt = fileName.split('.').pop()?.toLowerCase();
@@ -305,20 +277,19 @@ Type */menu* to begin! 🚀`;
     }
   }
 
-  private async downloadMediaMessage(message: WAMessage): Promise<Buffer | null> {
+  private async downloadMediaMessage(message: WAMessage, type: 'document' | 'image' | 'audio' | 'video'): Promise<Buffer | null> {
     try {
-      const stream = await downloadMediaMessage(
-        message,
-        'buffer',
-        {},
-        {
-          logger: { level: 'silent' } as any,
-          reuploadRequest: this.socket.updateMediaMessage
-        }
-      );
-      return stream as Buffer;
+      if (!this.socket) return null;
+
+      const downloadableMessage = message.message?.[`${type}Message`];
+      if (!downloadableMessage) return null;
+
+      // Use the socket's downloadMediaMessage method
+      const buffer = await this.socket.downloadMediaMessage(message);
+      return buffer;
+
     } catch (error) {
-      logger.error(`Error downloading media:`, error);
+      logger.error(`Error downloading ${type}:`, error);
       return null;
     }
   }
@@ -329,9 +300,8 @@ Type */menu* to begin! 🚀`;
         throw new Error('WhatsApp socket not initialized');
       }
 
-      const formattedTo = formatPhoneNumber(to);
-      await this.socket.sendMessage(formattedTo, { text });
-      logger.info(`Message sent to ${formattedTo}: ${text.substring(0, 50)}...`);
+      await this.socket.sendMessage(to, { text });
+      logger.info(`Message sent to ${to}: ${text.substring(0, 50)}...`);
     } catch (error) {
       logger.error('Failed to send message:', error);
       throw error;
@@ -344,7 +314,7 @@ Type */menu* to begin! 🚀`;
 
   async disconnect(): Promise<void> {
     if (this.socket) {
-      this.socket.end(new Error('Graceful shutdown'));
+      await this.socket.logout();
       this.socket = null;
       this.connected = false;
       logger.info('WhatsApp client disconnected');
