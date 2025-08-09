@@ -3,7 +3,8 @@ import makeWASocket, {
   DisconnectReason, 
   useMultiFileAuthState,
   WAMessage,
-  proto
+  proto,
+  Browsers
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import { logger, formatPhoneNumber } from './utils';
@@ -41,6 +42,7 @@ export class WhatsAppService {
       
       this.socket = makeWASocket({
         auth: state,
+        browser: Browsers.macOS('Desktop'),
         logger: {
           level: 'silent',
           trace: () => {},
@@ -315,7 +317,7 @@ Type */menu* to begin! 🚀`;
 
   async disconnect(): Promise<void> {
     if (this.socket) {
-      await this.socket.logout();
+      this.socket.end(new Error('Graceful shutdown'));
       this.socket = null;
       this.connected = false;
       logger.info('WhatsApp client disconnected');
