@@ -6,7 +6,7 @@ import makeWASocket, {
   proto
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
-import { logger } from './utils';
+import { logger, formatPhoneNumber } from './utils';
 
 export interface WhatsAppMessage {
   from: string;
@@ -300,8 +300,9 @@ Type */menu* to begin! 🚀`;
         throw new Error('WhatsApp socket not initialized');
       }
 
-      await this.socket.sendMessage(to, { text });
-      logger.info(`Message sent to ${to}: ${text.substring(0, 50)}...`);
+      const formattedTo = formatPhoneNumber(to);
+      await this.socket.sendMessage(formattedTo, { text });
+      logger.info(`Message sent to ${formattedTo}: ${text.substring(0, 50)}...`);
     } catch (error) {
       logger.error('Failed to send message:', error);
       throw error;
@@ -314,7 +315,7 @@ Type */menu* to begin! 🚀`;
 
   async disconnect(): Promise<void> {
     if (this.socket) {
-      await this.socket.logout();
+      this.socket.end(new Error('Graceful shutdown'));
       this.socket = null;
       this.connected = false;
       logger.info('WhatsApp client disconnected');
