@@ -315,7 +315,7 @@ Type */menu* to begin! 🚀`;
 
   async disconnect(): Promise<void> {
     if (this.socket) {
-      await this.socket.logout();
+      this.socket.end(new Error('Graceful shutdown'));
       this.socket = null;
       this.connected = false;
       logger.info('WhatsApp client disconnected');
