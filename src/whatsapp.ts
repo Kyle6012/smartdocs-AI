@@ -1,4 +1,5 @@
-import makeWASocket, { 
+const {
+  default: makeWASocket,
   ConnectionState, 
   DisconnectReason, 
   useMultiFileAuthState,
@@ -7,7 +8,7 @@ import makeWASocket, {
   Browsers,
   makeInMemoryStore,
   downloadMediaMessage
-} from '@whiskeysockets/baileys';
+} = require('@whiskeysockets/baileys');
 import { Boom } from '@hapi/boom';
 import { logger, formatPhoneNumber } from './utils';
 
