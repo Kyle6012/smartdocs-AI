@@ -1,4 +1,14 @@
-import * as Baileys from '@whiskeysockets/baileys';
+import makeWASocket, {
+  ConnectionState,
+  DisconnectReason,
+  useMultiFileAuthState,
+  WAMessage,
+  proto,
+  Browsers,
+  downloadMediaMessage
+} from '@whiskeysockets/baileys';
+// @ts-ignore
+import makeInMemoryStore from '@whiskeysockets/baileys/lib/Store/make-in-memory-store';
 import { Boom } from '@hapi/boom';
 import { logger, formatPhoneNumber } from './utils';
 
@@ -27,7 +37,7 @@ export class WhatsAppService {
   async initialize(): Promise<void> {
     try {
       const storeLogger = { ...logger, level: 'silent' };
-      this.store = Baileys.makeInMemoryStore({ logger: storeLogger as any });
+      this.store = makeInMemoryStore({ logger: storeLogger as any });
 
       const storeFile = `${this.sessionName}_store.json`;
       if (existsSync(storeFile)) {
@@ -41,7 +51,7 @@ export class WhatsAppService {
       }, 10_000);
 
       logger.info(`🔄 Initializing WhatsApp with session: ${this.sessionName}`);
-      const { state, saveCreds } = await Baileys.useMultiFileAuthState(this.sessionName);
+      const { state, saveCreds } = await useMultiFileAuthState(this.sessionName);
       
       // Check if we have existing credentials
       const hasExistingAuth = state.creds?.me?.id;
@@ -51,9 +61,9 @@ export class WhatsAppService {
         logger.info('🆕 No existing credentials found, will show QR code...');
       }
       
-      this.socket = Baileys.default({
+      this.socket = makeWASocket({
         auth: state,
-        browser: Baileys.Browsers.macOS('Desktop'),
+        browser: Browsers.macOS('Desktop'),
         getMessage: async key => {
           return (this.store.loadMessage(key.remoteJid!, key.id!) || this.store.loadMessage(key.remoteJid!, key.id!))?.message || undefined
         },
@@ -90,7 +100,7 @@ export class WhatsAppService {
     }
   }
 
-  private async handleConnectionUpdate(update: Partial<Baileys.ConnectionState>) {
+  private async handleConnectionUpdate(update: Partial<ConnectionState>) {
     const { connection, lastDisconnect, qr } = update;
     
     if (qr) {
@@ -115,7 +125,7 @@ export class WhatsAppService {
     }
     
         if (connection === 'close') {
-      const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== Baileys.DisconnectReason.loggedOut;
+      const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
       
       if (shouldReconnect) {
         logger.warn('Connection closed, reconnecting...');
@@ -212,7 +222,7 @@ Type */menu* to begin! 🚀`;
     }
   }
 
-  private async handleMessages(m: { messages: Baileys.WAMessage[] }) {
+  private async handleMessages(m: { messages: WAMessage[] }) {
     const message = m.messages[0];
     
     if (!message.message || message.key.fromMe) return;
@@ -295,9 +305,9 @@ Type */menu* to begin! 🚀`;
     }
   }
 
-  private async downloadMediaMessage(message: Baileys.WAMessage): Promise<Buffer | null> {
+  private async downloadMediaMessage(message: WAMessage): Promise<Buffer | null> {
     try {
-      const stream = await Baileys.downloadMediaMessage(
+      const stream = await downloadMediaMessage(
         message,
         'buffer',
         {},
