@@ -1,6 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { WhatsAppService, WhatsAppMessage } from './whatsapp';
+import { startWhatsApp } from './whatsapp';
 import { WhatsAppBusinessService, WhatsAppBusinessMessage } from './whatsapp-business';
 import { WebChatService, WebChatMessage } from './web-chat';
 import { TogetherAIService } from './together';
@@ -17,13 +17,21 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
+let whatsappSocket: any = null;
+let sendMessageWithRetry: any = null;
+let whatsappBusinessService: WhatsAppBusinessService | null = null;
+let webChatService: WebChatService;
+let togetherService: TogetherAIService;
+let qdrantService: QdrantService;
+let adminTrainingService: AdminTrainingService;
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
     services: {
-      whatsapp_baileys: whatsappService?.isConnected() || false,
+      whatsapp_baileys: whatsappSocket?.user ? true : false,
       whatsapp_business: !!whatsappBusinessService,
       web_chat: !!webChatService,
       together_ai: !!process.env.TOGETHER_API_KEY,
@@ -120,23 +128,8 @@ app.get('/widget.html', (req, res) => {
   }
 });
 
-let whatsappService: WhatsAppService | null = null;
-let whatsappBusinessService: WhatsAppBusinessService | null = null;
-let webChatService: WebChatService;
-let togetherService: TogetherAIService;
-let qdrantService: QdrantService;
-let adminTrainingService: AdminTrainingService;
-
-async function handleWhatsAppMessage(message: WhatsAppMessage): Promise<void> {
-  // Handle file uploads from admins
-  if (message.fileContent && message.fileName && adminTrainingService.isAdmin(message.from)) {
-    const response = await adminTrainingService.handleFileUpload(message.from, message.fileContent, message.fileName);
-    if (whatsappService) {
-      await whatsappService.sendMessage(message.from, response);
-    }
-    return;
-  }
-
+async function handleWhatsAppMessage(message: any): Promise<void> {
+  // This function now needs to be adapted to the new message format from Baileys
   const unifiedMessage = UnifiedChatHandler.fromWhatsApp(message);
   await handleUnifiedMessage(unifiedMessage);
 }
@@ -156,8 +149,8 @@ async function handleUnifiedMessage(message: UnifiedMessage): Promise<void> {
       const adminResponse = await adminTrainingService.handleAdminMessage(message.from, sanitizedMessage);
       
       // Send admin response through appropriate platform
-      if (message.platform === 'whatsapp' && whatsappService) {
-        await whatsappService.sendMessage(message.from, adminResponse);
+      if (message.platform === 'whatsapp' && sendMessageWithRetry) {
+        await sendMessageWithRetry(message.from, { text: adminResponse });
       } else if (message.platform === 'whatsapp-business' && whatsappBusinessService) {
         await whatsappBusinessService.sendMessage(message.from, adminResponse);
       } else if (message.platform === 'web') {
@@ -175,8 +168,8 @@ async function handleUnifiedMessage(message: UnifiedMessage): Promise<void> {
           !adminResponse.includes('Type /menu')) {
         
                  // Send admin response through appropriate platform
-         if (message.platform === 'whatsapp' && whatsappService) {
-           await whatsappService.sendMessage(message.from, adminResponse);
+         if (message.platform === 'whatsapp' && sendMessageWithRetry) {
+           await sendMessageWithRetry(message.from, { text: adminResponse });
          } else if (message.platform === 'whatsapp-business' && whatsappBusinessService) {
            await whatsappBusinessService.sendMessage(message.from, adminResponse);
          } else if (message.platform === 'web') {
@@ -204,8 +197,8 @@ async function handleUnifiedMessage(message: UnifiedMessage): Promise<void> {
     
     // Send response based on platform
     if (UnifiedChatHandler.isWhatsAppPlatform(message.platform)) {
-      if (whatsappService) {
-        await whatsappService.sendMessage(message.from, response);
+      if (sendMessageWithRetry) {
+        await sendMessageWithRetry(message.from, { text: response });
       } else if (whatsappBusinessService) {
         await whatsappBusinessService.sendMessage(message.from, response);
       }
@@ -213,7 +206,7 @@ async function handleUnifiedMessage(message: UnifiedMessage): Promise<void> {
       webChatService.addBotResponse(message.sessionId, response);
     }
     
-    logger.success(`Response sent to ${message.from} via ${message.platform}`);
+    logger.info(`Response sent to ${message.from} via ${message.platform}`);
   } catch (error) {
     logger.error('Error handling message:', error);
     
@@ -221,8 +214,8 @@ async function handleUnifiedMessage(message: UnifiedMessage): Promise<void> {
     
     try {
       if (UnifiedChatHandler.isWhatsAppPlatform(message.platform)) {
-        if (whatsappService) {
-          await whatsappService.sendMessage(message.from, errorMessage);
+        if (sendMessageWithRetry) {
+          await sendMessageWithRetry(message.from, { text: errorMessage });
         } else if (whatsappBusinessService) {
           await whatsappBusinessService.sendMessage(message.from, errorMessage);
         }
@@ -245,10 +238,6 @@ async function initializeServices(): Promise<void> {
       throw new Error('Missing Qdrant configuration');
     }
 
-    if (!process.env.WA_SESSION_NAME) {
-      throw new Error('Missing WhatsApp session name');
-    }
-
     // Initialize Together AI service
     const model = process.env.TOGETHER_MODEL || 'meta-llama/Llama-2-70b-chat-hf';
     const embeddingModel = process.env.TOGETHER_EMBEDDING_MODEL || 'BAAI/bge-base-en-v1.5';
@@ -263,7 +252,24 @@ async function initializeServices(): Promise<void> {
     );
 
     // Initialize WhatsApp service
-    whatsappService = new WhatsAppService(process.env.WA_SESSION_NAME);
+    if (process.env.USE_BAILEYS === 'true') {
+      const wa = await startWhatsApp();
+      whatsappSocket = wa.sock;
+      sendMessageWithRetry = wa.sendMessageWithRetry;
+    }
+
+    // Initialize WhatsApp Business service
+    if (process.env.USE_WHATSAPP_BUSINESS === 'true') {
+      if (!process.env.WA_BUSINESS_ACCESS_TOKEN || !process.env.WA_BUSINESS_PHONE_NUMBER_ID || !process.env.WA_BUSINESS_WEBHOOK_VERIFY_TOKEN) {
+        throw new Error('Missing WhatsApp Business API configuration');
+      }
+      whatsappBusinessService = new WhatsAppBusinessService({
+        accessToken: process.env.WA_BUSINESS_ACCESS_TOKEN,
+        phoneNumberId: process.env.WA_BUSINESS_PHONE_NUMBER_ID,
+        webhookVerifyToken: process.env.WA_BUSINESS_WEBHOOK_VERIFY_TOKEN,
+        apiVersion: process.env.WA_BUSINESS_API_VERSION || 'v18.0',
+      });
+    }
 
     // Test connections
     await qdrantService.testConnection();
@@ -282,19 +288,33 @@ async function initializeServices(): Promise<void> {
 
     // Initialize admin training service
     const adminNumbers = process.env.ADMIN_NUMBERS ? process.env.ADMIN_NUMBERS.split(',') : [];
+    // The AdminTrainingService needs a sendMessage function, so we pass the one from Baileys
+    const dummyWhatsAppService = { sendMessage: sendMessageWithRetry };
     adminTrainingService = new AdminTrainingService(
       qdrantService, 
       togetherService, 
-      whatsappService || new WhatsAppService('dummy'),
+      dummyWhatsAppService as any,
       webChatService,
       adminNumbers
     );
 
     // Set up message handling
-    whatsappService.onMessage(handleWhatsAppMessage);
-    await whatsappService.initialize();
+    whatsappSocket.ev.on('messages.upsert', (m: any) => {
+      // We need to adapt the message format here to what handleWhatsAppMessage expects
+      // This is a placeholder and will need to be implemented correctly
+      const message = m.messages[0];
+      if (message.key.fromMe) return;
 
-    logger.success('All services initialized successfully');
+      const adaptedMessage = {
+          from: message.key.remoteJid,
+          text: message.message?.conversation || message.message?.extendedTextMessage?.text || '',
+          timestamp: message.messageTimestamp,
+          // file handling would need to be adapted here
+      };
+      handleWhatsAppMessage(adaptedMessage);
+    });
+
+    logger.info('All services initialized successfully');
 
   } catch (error) {
     logger.error('Failed to initialize services:', error);
@@ -305,8 +325,8 @@ async function initializeServices(): Promise<void> {
 async function gracefulShutdown(): Promise<void> {
   logger.info('Shutting down gracefully...');
   
-  if (whatsappService) {
-    await whatsappService.disconnect();
+  if (whatsappSocket) {
+    await whatsappSocket.end(new Error('Graceful shutdown'));
   }
   
   process.exit(0);

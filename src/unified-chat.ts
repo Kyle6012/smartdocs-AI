@@ -1,6 +1,14 @@
-import { WhatsAppMessage } from './whatsapp';
 import { WhatsAppBusinessMessage } from './whatsapp-business';
 import { WebChatMessage } from './web-chat';
+
+// This is now a shared interface, previously in whatsapp.ts
+export interface WhatsAppMessage {
+  from: string;
+  text: string;
+  timestamp: number;
+  fileContent?: string;
+  fileName?: string;
+}
 
 export interface UnifiedMessage {
   from: string;
