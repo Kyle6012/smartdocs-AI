@@ -1,5 +1,6 @@
 // src/whatsapp.ts
 import path from 'path'
+import qrcode from 'qrcode-terminal'
 import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason,
@@ -33,7 +34,6 @@ export async function startWhatsApp() {
   // Create socket (pass a valid config object — TS will expect 1 argument)
   const sock = makeWASocket({
     auth: state,
-    printQRInTerminal: true,
     version,
     browser: ['MacOS', 'SmartDocs-AI', '1.0.0']
   } as any) // 'as any' only if TS complains; remove if not needed
@@ -43,11 +43,19 @@ export async function startWhatsApp() {
 
   // Connection updates
   sock.ev.on('connection.update', (update) => {
-    console.log('connection.update', update)
-    if ((update?.connection as string) === 'close') {
-      const reason = (update?.lastDisconnect?.error as any)?.output?.statusCode || update?.lastDisconnect?.error
-      console.warn('Disconnected - reason:', reason)
+    const { connection, lastDisconnect, qr } = update || {}
+
+    if (qr) {
+      console.log('QR code received, please scan:')
+      qrcode.generate(qr, { small: true })
     }
+
+    if (connection === 'close') {
+      const reason = (lastDisconnect?.error as any)?.output?.statusCode || lastDisconnect?.error
+      console.warn(`Connection closed, reason: ${reason}`)
+    }
+
+    console.log('connection.update', update)
   })
 
   // Incoming messages
