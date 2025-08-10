@@ -1,8 +1,16 @@
 import { QdrantService, Document } from './qdrant';
 import { TogetherAIService } from './together';
-import { WhatsAppService } from './whatsapp';
 import { WebChatService, WidgetConfig } from './web-chat';
 import { logger } from './utils';
+
+// This is now a shared interface, previously in whatsapp.ts
+export interface WhatsAppMessage {
+  from: string;
+  text: string;
+  timestamp: number;
+  fileContent?: string;
+  fileName?: string;
+}
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 
@@ -22,7 +30,7 @@ interface TrainingSession {
 export class AdminTrainingService {
   private qdrantService: QdrantService;
   private togetherService: TogetherAIService;
-  private whatsappService: WhatsAppService;
+  private whatsappService: any; // Now it's just the sendMessage function
   private webChatService: WebChatService;
   private adminNumbers: Set<string>;
   private sessions: Map<string, TrainingSession> = new Map();
@@ -30,7 +38,7 @@ export class AdminTrainingService {
   constructor(
     qdrantService: QdrantService, 
     togetherService: TogetherAIService,
-    whatsappService: WhatsAppService,
+    whatsappService: any,
     webChatService: WebChatService,
     adminNumbers: string[] = []
   ) {
