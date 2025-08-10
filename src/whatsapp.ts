@@ -54,8 +54,6 @@ export async function startWhatsApp() {
       const reason = (lastDisconnect?.error as any)?.output?.statusCode || lastDisconnect?.error
       console.warn(`Connection closed, reason: ${reason}`)
     }
-
-    console.log('connection.update', update)
   })
 
   // Incoming messages
