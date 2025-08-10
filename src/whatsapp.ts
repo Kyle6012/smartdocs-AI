@@ -33,7 +33,7 @@ export async function startWhatsApp() {
   // Create socket (pass a valid config object — TS will expect 1 argument)
   const sock = makeWASocket({
     auth: state,
-    printQRInTerminal: false,
+    printQRInTerminal: true,
     version,
     browser: ['MacOS', 'SmartDocs-AI', '1.0.0']
   } as any) // 'as any' only if TS complains; remove if not needed
