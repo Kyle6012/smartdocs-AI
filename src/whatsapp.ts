@@ -51,8 +51,13 @@ export async function startWhatsApp() {
     }
 
     if (connection === 'close') {
-      const reason = (lastDisconnect?.error as any)?.output?.statusCode || lastDisconnect?.error
-      console.warn(`Connection closed, reason: ${reason}`)
+      const shouldReconnect = (lastDisconnect?.error as any)?.output?.statusCode !== DisconnectReason.loggedOut
+      console.warn(`Connection closed, reason: ${lastDisconnect?.error}, reconnecting: ${shouldReconnect}`)
+      if (shouldReconnect) {
+        startWhatsApp()
+      } else {
+        console.error('Connection closed permanently, please delete wa-bot-session and restart.')
+      }
     }
   })
 
